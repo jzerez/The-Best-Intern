@@ -16,12 +16,13 @@ if len(sys.argv) < 2:
 else:
     num_votes = int(sys.argv[1])
 
+input_emails = False
 # file with the URL for specific intern account page
 f = open('creds.txt')
 url = f.read()
 chrome_path = r"C:\Users\jzerez\Desktop\chromedriver_win32\chromedriver.exe"
 successful_votes = 0
-
+driver = webdriver.Chrome(chrome_path)
 for i in range(num_votes):
     """
     This really should be handled better than just wrapping everything in a
@@ -30,7 +31,6 @@ for i in range(num_votes):
     """
     try:
         # Initializes the webdriver instance to run on Chromium
-        driver = webdriver.Chrome(chrome_path)
         driver.get(url)
         driver.implicitly_wait(1)
 
@@ -42,36 +42,36 @@ for i in range(num_votes):
         webdriver.ActionChains(driver).perform()
         time.sleep(1.5)
         webdriver.ActionChains(driver).click(vote_button).perform()
-        time.sleep(1.5)
+        if input_emails:
+            time.sleep(1.5)
+            # Wait until a specific header object that corresponds to the email page is found
+            header = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="content_rich_text5"]/h1'))
+            )
+            # Generate fake user details
+            first_name, last_name, email = rand_email()
 
-        # Wait until a specific header object that corresponds to the email page is found
-        header = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="content_rich_text5"]/h1'))
-        )
-        # Generate fake user details
-        first_name, last_name, email = rand_email()
+            # find input fields
+            first_name_element = driver.find_elements_by_id('form3_first_name')
+            last_name_element = driver.find_elements_by_id('form3_last_name')
+            email_element = driver.find_elements_by_id('form3_email')
+            checkbox_element = driver.find_elements_by_id('form3_custom_field_5_block')
+            submit_element = driver.find_elements_by_id('form3_submit_block')
 
-        # find input fields
-        first_name_element = driver.find_elements_by_id('form3_first_name')
-        last_name_element = driver.find_elements_by_id('form3_last_name')
-        email_element = driver.find_elements_by_id('form3_email')
-        checkbox_element = driver.find_elements_by_id('form3_custom_field_5_block')
-        submit_element = driver.find_elements_by_id('form3_submit_block')
-
-        # Push fake user details to appropriate fields
-        first_name_element[0].send_keys(first_name)
-        last_name_element[0].send_keys(last_name)
-        email_element[0].send_keys(email)
-        # move to the checkbox, wait, then click it.
-        webdriver.ActionChains(driver).move_to_element(checkbox_element[0])
-        webdriver.ActionChains(driver).perform()
-        time.sleep(0.5)
-        webdriver.ActionChains(driver).click(checkbox_element[0]).perform()
-        submit_element[0].click()
-
+            # Push fake user details to appropriate fields
+            first_name_element[0].send_keys(first_name)
+            last_name_element[0].send_keys(last_name)
+            email_element[0].send_keys(email)
+            # move to the checkbox, wait, then click it.
+            webdriver.ActionChains(driver).move_to_element(checkbox_element[0])
+            webdriver.ActionChains(driver).perform()
+            time.sleep(0.5)
+            webdriver.ActionChains(driver).click(checkbox_element[0]).perform()
+            submit_element[0].click()
+        
         # keep track of number of successful votes.
         successful_votes += 1
-        driver.quit()
+        print(successful_votes, 'votes successful out of', num_votes)
     except:
         pass
 # final information about the success of the program.
